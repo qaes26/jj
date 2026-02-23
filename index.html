@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ألغاز حب رهف</title>
+    <!-- استدعاء Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Cairo', sans-serif;
+            /* خلفية رومانسية عميقة (ألوان تناسب رهف) */
+            background: linear-gradient(135deg, #2e081c 0%, #6b123d 50%, #1a0b2e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .font-amiri { font-family: 'Amiri', serif; }
+
+        /* تأثير الزجاج (Glassmorphism) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.8), 0 0 30px rgba(255, 105, 180, 0.6);
+        }
+
+        /* حركات الانتقال */
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        .fade-out { animation: fadeOut 0.5s ease-in forwards; }
+        .slide-up { animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); visibility: hidden; } }
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* اهتزاز عند الإجابة الخاطئة */
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        /* خيارات الإجابة */
+        .option-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .option-btn:hover {
+            background: rgba(236, 72, 153, 0.4);
+            border-color: rgba(236, 72, 153, 0.8);
+            transform: translateY(-2px);
+        }
+        .option-btn.correct {
+            background: rgba(34, 197, 94, 0.6); /* أخضر للصح */
+            border-color: #22c55e;
+            transform: scale(1.05);
+        }
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.6); /* أحمر للخطأ */
+            border-color: #ef4444;
+        }
+
+        /* قلوب الخلفية المتطايرة */
+        .bg-heart {
+            position: absolute;
+            color: rgba(255, 105, 180, 0.15);
+            animation: float 10s infinite linear;
+            z-index: -1;
+            pointer-events: none;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg) scale(1); }
+            100% { transform: translateY(-20vh) rotate(360deg) scale(1.5); }
+        }
+
+        /* مؤشر الكتابة (Cursor) */
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- خلفية القلوب المتحركة -->
+    <div id="hearts-bg"></div>
+
+    <!-- شاشة اللعبة (الأسئلة) -->
+    <div id="quiz-container" class="glass-card rounded-3xl p-8 md:p-10 max-w-lg w-[90%] text-center z-10 slide-up">
+        
+        <!-- عداد الأسئلة -->
+        <div class="mb-6 flex justify-between items-center text-rose-300 font-semibold border-b border-white/10 pb-4">
+            <span>لغز الحب رقم:</span>
+            <span id="question-counter" class="bg-rose-500/20 px-4 py-1 rounded-full border border-rose-500/30">1 / 5</span>
+        </div>
+
+        <!-- نص السؤال -->
+        <h2 id="question-text" class="text-2xl md:text-3xl font-amiri text-rose-100 mb-8 leading-relaxed h-20 flex items-center justify-center">
+            جاري تحميل اللغز...
+        </h2>
+
+        <!-- أزرار الخيارات -->
+        <div id="options-container" class="grid grid-cols-1 gap-4">
+            <!-- سيتم إضافة الأزرار هنا -->
+        </div>
+
+    </div>
+
+    <!-- شاشة النهاية (الغزل والشعر بتأثير الكتابة) -->
+    <div id="end-screen" class="hidden glass-card rounded-3xl p-8 md:p-12 max-w-xl w-[90%] text-center z-20 absolute">
+        
+        <div class="mb-4 flex justify-center">
+            <svg class="w-16 h-16 text-rose-500 animate-pulse drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+
+        <!-- مساحات ثابتة (min-h) لمنع اهتزاز الشاشة أثناء الكتابة -->
+        <h1 id="final-heading" class="text-3xl md:text-4xl font-amiri text-rose-300 mb-6 text-glow leading-tight min-h-[3rem] md:min-h-[4rem]"></h1>
+        
+        <div id="final-poem" class="text-lg md:text-2xl leading-loose font-amiri text-gray-100 mb-8 space-y-4 min-h-[16rem]">
+            <!-- سيتم كتابة الشعر هنا حرفاً بحرف -->
+        </div>
+
+        <!-- التوقيع المطلوب -->
+        <div id="final-signature" class="mt-8 pt-6 border-t border-rose-500/30 opacity-0 transition-opacity duration-1000">
+            <p class="text-lg text-rose-200 tracking-widest font-semibold font-cairo">
+                من اعداد قيس جازي
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // مصفوفة الأسئلة والخيارات لـ "رهف"
+        const questions = [
+            {
+                question: "متى تاريخ ارتباطنا؟ ❤️",
+                options: ["1 / 1", "23 / 11", "15 / 5", "10 / 10"],
+                answer: 1 // الإجابة هي "23 / 11" (الاندكس 1)
+            },
+            {
+                question: "أكثر كلمة بحب أسمعها منك؟ 🥰",
+                options: ["حبيبي", "عمري", "اماني", "قيس"],
+                answer: 2 // الإجابة هي "اماني"
+            },
+            {
+                question: "شو هو أول لقب عطيتك ياه؟ 😂",
+                options: ["دبة", "أميرتي", "حياتي", "عسل"],
+                answer: 0 // الإجابة هي "دبة"
+            },
+            {
+                question: "اسم بنتنا المستقبلية إن شاء الله؟ 👧🏻",
+                options: ["جود", "سارة", "نور", "وتين"],
+                answer: 3 // الإجابة هي "وتين"
+            },
+            {
+                question: "مين أقرب شخص لقلب قيس.. أو بالمعنى الأدق مين كل قلبه؟ 💖",
+                options: ["شغله", "رهف", "أصحابه", "عيلته"],
+                answer: 1 // الإجابة هي "رهف"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        const quizContainer = document.getElementById('quiz-container');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const questionCounter = document.getElementById('question-counter');
+        const endScreen = document.getElementById('end-screen');
+
+        // توليد قلوب في الخلفية
+        function createBackgroundHearts() {
+            const bg = document.getElementById('hearts-bg');
+            for(let i=0; i<15; i++) {
+                let heart = document.createElement('div');
+                heart.innerHTML = '❤';
+                heart.className = 'bg-heart text-2xl md:text-4xl';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                heart.style.animationDelay = (Math.random() * 5) + 's';
+                bg.appendChild(heart);
+            }
+        }
+
+        // عرض السؤال الحالي
+        function loadQuestion() {
+            questionCounter.innerText = `${currentQuestionIndex + 1} / ${questions.length}`;
+            const currentQ = questions[currentQuestionIndex];
+            questionText.innerText = currentQ.question;
+            optionsContainer.innerHTML = '';
+
+            currentQ.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.className = 'option-btn text-lg md:text-xl font-semibold py-4 px-6 rounded-2xl w-full text-white cursor-pointer';
+                button.onclick = () => checkAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // التحقق من الإجابة
+        function checkAnswer(selectedIndex, buttonElement) {
+            const currentQ = questions[currentQuestionIndex];
+            const allButtons = optionsContainer.querySelectorAll('button');
+            allButtons.forEach(btn => btn.style.pointerEvents = 'none');
+
+            if (selectedIndex === currentQ.answer) {
+                // إجابة صحيحة
+                buttonElement.classList.add('correct');
+                
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < questions.length) {
+                        quizContainer.classList.remove('slide-up');
+                        quizContainer.classList.add('fade-out');
+                        
+                        setTimeout(() => {
+                            loadQuestion();
+                            quizContainer.classList.remove('fade-out');
+                            quizContainer.classList.add('fade-in');
+                        }, 500);
+                    } else {
+                        showEndScreen();
+                    }
+                }, 800);
+
+            } else {
+                // إجابة خاطئة
+                buttonElement.classList.add('wrong', 'shake');
+                setTimeout(() => {
+                    buttonElement.classList.remove('wrong', 'shake');
+                    allButtons.forEach(btn => btn.style.pointerEvents = 'auto');
+                }, 800);
+            }
+        }
+
+        // إظهار شاشة الغزل والشعر النهائية وبدء تأثير الكتابة
+        function showEndScreen() {
+            quizContainer.classList.add('fade-out');
+            setTimeout(() => {
+                quizContainer.style.display = 'none';
+                endScreen.classList.remove('hidden');
+                endScreen.classList.add('slide-up');
+                
+                createExplosion();
+
+                // الانتظار قليلاً قبل بدء الكتابة
+                setTimeout(startTypingEffect, 800);
+            }, 500);
+        }
+
+        // نصوص النهاية
+        const finalHeadingText = "أنتِ كل إجاباتي يا رهف!";
+        const finalPoemLines = [
+            "يا رهف.. يا أجمل صدفة غيرت حياتي",
+            "أنتِ البداية والنهاية، وأنتِ كل اختياراتي",
+            "ومعك بستنى أشوف بنتنا وتين تكبر قدام عيوني",
+            "أنتِ مش بس قريبة لقلبي.. أنتِ كل قلبي",
+            "بحبك اليوم وبكرة ولآخر العمر ❤️"
+        ];
+
+        // دالة الكتابة حرفاً بحرف
+        function typeWriter(element, text, speed, callback) {
+            const chars = Array.from(text);
+            let i = 0;
+            element.innerHTML = "";
+            element.classList.add('typing-cursor'); // إضافة مؤشر الكتابة
+            
+            function type() {
+                if (i < chars.length) {
+                    element.innerHTML += chars[i];
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing-cursor'); // إزالة المؤشر بعد الانتهاء
+                    if (callback) {
+                        setTimeout(callback, 300);
+                    }
+                }
+            }
+            type();
+        }
+
+        function startTypingEffect() {
+            const headingEl = document.getElementById('final-heading');
+            const poemContainer = document.getElementById('final-poem');
+            const signatureEl = document.getElementById('final-signature');
+
+            headingEl.innerHTML = "";
+            poemContainer.innerHTML = "";
+
+            // كتابة العنوان بسرعة
+            typeWriter(headingEl, finalHeadingText, 60, () => {
+                typeNextLine(0, poemContainer, signatureEl);
+            });
+        }
+
+        function typeNextLine(index, container, signatureEl) {
+            if (index < finalPoemLines.length) {
+                const p = document.createElement('p');
+                if (index === finalPoemLines.length - 1) {
+                    p.className = "text-rose-400 font-bold mt-4 text-glow";
+                }
+                container.appendChild(p);
+                
+                typeWriter(p, finalPoemLines[index], 40, () => {
+                    typeNextLine(index + 1, container, signatureEl);
+                });
+            } else {
+                // إظهار التوقيع بنعومة
+                signatureEl.style.opacity = '1';
+            }
+        }
+
+        // تأثير احتفالي عند النهاية
+        function createExplosion() {
+            const colors = ['#ff007f', '#ff4d4d', '#ff758c', '#ffffff'];
+            for (let i = 0; i < 50; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = '50%';
+                confetti.style.top = '50%';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.zIndex = '50';
+                confetti.style.pointerEvents = 'none';
+                
+                let angle = Math.random() * Math.PI * 2;
+                let velocity = Math.random() * 150 + 50;
+                let tx = Math.cos(angle) * velocity;
+                let ty = Math.sin(angle) * velocity;
+
+                confetti.animate([
+                    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 1000 + 1000,
+                    easing: 'cubic-bezier(0, .9, .57, 1)',
+                    fill: 'forwards'
+                });
+
+                document.body.appendChild(confetti);
+            }
+        }
+
+        // بدء اللعبة
+        window.onload = () => {
+            createBackgroundHearts();
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
+
